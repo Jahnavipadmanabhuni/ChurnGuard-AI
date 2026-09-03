@@ -1,0 +1,42 @@
+
+:root{
+  --bg:#0A0E14;
+  --panel: rgba(255,255,255,0.03);
+  --glass: rgba(255,255,255,0.04);
+  --muted:#9aa4b2;
+  --text:#e6eef8;
+  --accent-from:#2563eb;
+  --accent-to:#06b6d4;
+  --danger:#ef4444;
+  --radius:12px;
+}
+
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial;background:var(--bg);color:var(--text)}
+
+.cg-container{max-width:980px;margin:28px auto;padding:20px}
+header h1{margin:0 0 6px;font-size:20px}
+.muted{color:var(--muted)}
+
+.cg-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));backdrop-filter: blur(8px);padding:20px;border-radius:var(--radius);border:1px solid rgba(255,255,255,0.04)}
+.cg-form label{display:flex;flex-direction:column;font-size:13px;color:var(--text)}
+.cg-form input[type=number],.cg-form select{margin-top:8px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:var(--glass);color:var(--text);font-size:14px}
+.cg-form input[type=number]::placeholder{color:rgba(230,238,248,0.5)}
+.checkbox-row{grid-column:1/-1;display:flex;gap:12px;align-items:center}
+.checkbox-inline{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--text)}
+.checkbox-inline input{width:16px;height:16px}
+.actions{grid-column:1/-1;display:flex;gap:10px;margin-top:6px}
+.primary{background:linear-gradient(90deg,var(--accent-from),var(--accent-to));color:white;border:none;padding:10px 16px;border-radius:10px;cursor:pointer;box-shadow:0 6px 18px rgba(6,11,20,0.6)}
+.primary:disabled{opacity:0.6;cursor:default}
+.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:10px 14px;border-radius:10px;cursor:pointer;color:var(--text)}
+
+.output{margin-top:18px}
+.result{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.04);color:var(--text)}
+.result pre{white-space:pre-wrap;background:#071018;color:#dff6ff;padding:12px;border-radius:8px;overflow:auto}
+.error{color:var(--danger);background:rgba(239,68,68,0.06);padding:10px;border-radius:8px}
+
+footer.small{margin-top:14px;color:var(--muted);font-size:12px}
+
+@media (max-width:720px){
+  .cg-form{grid-template-columns:1fr}
+}
