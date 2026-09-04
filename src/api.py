@@ -1,18 +1,24 @@
+import os
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import joblib
 import pandas as pd
 import numpy as np
 
+# Absolute paths so this works regardless of the working directory the server starts from
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "..", "models", "xgboost_tuned_final.pkl")
+AUDIT_LOG_PATH = os.path.join(BASE_DIR, "..", "data", "audit_log.csv")
+
 # Load the tuned XGBoost model once, when the server starts
-model = joblib.load("../models/xgboost_tuned_final.pkl")
+model = joblib.load(MODEL_PATH)
 
 app = FastAPI(title="ChurnGuard AI API")
-from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", "https://*.vercel.app"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -163,6 +169,8 @@ def predict_and_retain(customer: CustomerData):
         "recommended_action": action,
         "explanation": explanation
     }
+
+
 from typing import List
 
 @app.post("/predict-batch")
@@ -173,9 +181,10 @@ def predict_batch(customers: List[CustomerData]):
         results.append(result)
     return results
 
+
 @app.get("/business-impact")
 def business_impact():
-    audit_df = pd.read_csv("../data/audit_log.csv")
+    audit_df = pd.read_csv(AUDIT_LOG_PATH)
 
     acted_on = audit_df[audit_df["recommended_action"] != "No action needed"]
     true_churners_acted_on = acted_on[acted_on["true_churn_label"] == 1]
