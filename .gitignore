@@ -1,5 +1,7 @@
 .venv/
-frontend/node_modules/
 __pycache__/
 *.pyc
+node_modules/
+dist/
 .env
+data/*.csv
