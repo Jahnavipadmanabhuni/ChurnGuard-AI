@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
+
 const DEFAULT_EXTRA_FIELDS = {
   gender_Male: true, Partner_Yes: false, Dependents_Yes: false,
   PhoneService_Yes: true, MultipleLines_No_phone_service: false, MultipleLines_Yes: false,
@@ -87,7 +89,7 @@ function App() {
     setError(null)
     try {
       const payload = { ...DEFAULT_EXTRA_FIELDS, ...form, engagement_trend: engagementTrend() }
-      const response = await fetch('http://127.0.0.1:8000/predict-and-retain', {
+      const response = await fetch(`${API_URL}/predict-and-retain`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -99,7 +101,7 @@ function App() {
       const data = await response.json()
       setResult(data)
     } catch (err) {
-      setError('Could not reach the prediction service. Confirm the API is running on port 8000.')
+      setError('Could not reach the prediction service. The backend may be waking up — try again in a moment.')
     } finally {
       setLoading(false)
     }
@@ -116,7 +118,7 @@ function App() {
   }
 
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/business-impact')
+    fetch(`${API_URL}/business-impact`)
       .then(res => res.json())
       .then(data => setImpact(data))
       .catch(() => setImpact(null))
