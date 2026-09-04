@@ -6,7 +6,8 @@ import joblib
 import pandas as pd
 import numpy as np
 
-# Absolute paths so this works regardless of the working directory the server starts from
+# Absolute paths so this works regardless of the working directory
+# the server starts from
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "..", "models", "xgboost_tuned_final.pkl")
 AUDIT_LOG_PATH = os.path.join(BASE_DIR, "..", "data", "audit_log.csv")
@@ -16,12 +17,16 @@ model = joblib.load(MODEL_PATH)
 
 app = FastAPI(title="ChurnGuard AI API")
 
+# ---------------------------------------------------------
+# CORS CONFIGURATION
+# ---------------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
         "https://churn-guard-ai-six.vercel.app",
     ],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -35,6 +40,7 @@ class CustomerData(BaseModel):
     feature_usage_score: float
     days_since_last_login: int
     subscription_plan_encoded: int
+
     gender_Male: bool
     Partner_Yes: bool
     Dependents_Yes: bool
@@ -59,40 +65,84 @@ class CustomerData(BaseModel):
     PaymentMethod_Credit_card_automatic: bool
     PaymentMethod_Electronic_check: bool
     PaymentMethod_Mailed_check: bool
+
     is_high_value_customer: int
     engagement_trend: float
 
 
-# Map API field names (valid Python identifiers) back to the model's actual column names
+# Map API field names back to the model's actual column names
 FIELD_NAME_MAP = {
-    "MultipleLines_No_phone_service": "MultipleLines_No phone service",
-    "InternetService_Fiber_optic": "InternetService_Fiber optic",
-    "OnlineSecurity_No_internet_service": "OnlineSecurity_No internet service",
-    "OnlineBackup_No_internet_service": "OnlineBackup_No internet service",
-    "DeviceProtection_No_internet_service": "DeviceProtection_No internet service",
-    "TechSupport_No_internet_service": "TechSupport_No internet service",
-    "StreamingTV_No_internet_service": "StreamingTV_No internet service",
-    "StreamingMovies_No_internet_service": "StreamingMovies_No internet service",
-    "PaymentMethod_Credit_card_automatic": "PaymentMethod_Credit card (automatic)",
-    "PaymentMethod_Electronic_check": "PaymentMethod_Electronic check",
-    "PaymentMethod_Mailed_check": "PaymentMethod_Mailed check",
+    "MultipleLines_No_phone_service":
+        "MultipleLines_No phone service",
+
+    "InternetService_Fiber_optic":
+        "InternetService_Fiber optic",
+
+    "OnlineSecurity_No_internet_service":
+        "OnlineSecurity_No internet service",
+
+    "OnlineBackup_No_internet_service":
+        "OnlineBackup_No internet service",
+
+    "DeviceProtection_No_internet_service":
+        "DeviceProtection_No internet service",
+
+    "TechSupport_No_internet_service":
+        "TechSupport_No internet service",
+
+    "StreamingTV_No_internet_service":
+        "StreamingTV_No internet service",
+
+    "StreamingMovies_No_internet_service":
+        "StreamingMovies_No internet service",
+
+    "PaymentMethod_Credit_card_automatic":
+        "PaymentMethod_Credit card (automatic)",
+
+    "PaymentMethod_Electronic_check":
+        "PaymentMethod_Electronic check",
+
+    "PaymentMethod_Mailed_check":
+        "PaymentMethod_Mailed check",
 }
 
-# The exact column order the model was trained on
-MODEL_COLUMNS = ['SeniorCitizen', 'customer_tenure_months', 'monthly_spend',
-                  'support_tickets_last_90d', 'feature_usage_score', 'days_since_last_login',
-                  'subscription_plan_encoded', 'gender_Male', 'Partner_Yes', 'Dependents_Yes',
-                  'PhoneService_Yes', 'MultipleLines_No phone service', 'MultipleLines_Yes',
-                  'InternetService_Fiber optic', 'InternetService_No',
-                  'OnlineSecurity_No internet service', 'OnlineSecurity_Yes',
-                  'OnlineBackup_No internet service', 'OnlineBackup_Yes',
-                  'DeviceProtection_No internet service', 'DeviceProtection_Yes',
-                  'TechSupport_No internet service', 'TechSupport_Yes',
-                  'StreamingTV_No internet service', 'StreamingTV_Yes',
-                  'StreamingMovies_No internet service', 'StreamingMovies_Yes',
-                  'PaperlessBilling_Yes', 'PaymentMethod_Credit card (automatic)',
-                  'PaymentMethod_Electronic check', 'PaymentMethod_Mailed check',
-                  'is_high_value_customer', 'engagement_trend']
+
+# Exact column order the model was trained on
+MODEL_COLUMNS = [
+    'SeniorCitizen',
+    'customer_tenure_months',
+    'monthly_spend',
+    'support_tickets_last_90d',
+    'feature_usage_score',
+    'days_since_last_login',
+    'subscription_plan_encoded',
+    'gender_Male',
+    'Partner_Yes',
+    'Dependents_Yes',
+    'PhoneService_Yes',
+    'MultipleLines_No phone service',
+    'MultipleLines_Yes',
+    'InternetService_Fiber optic',
+    'InternetService_No',
+    'OnlineSecurity_No internet service',
+    'OnlineSecurity_Yes',
+    'OnlineBackup_No internet service',
+    'OnlineBackup_Yes',
+    'DeviceProtection_No internet service',
+    'DeviceProtection_Yes',
+    'TechSupport_No internet service',
+    'TechSupport_Yes',
+    'StreamingTV_No internet service',
+    'StreamingTV_Yes',
+    'StreamingMovies_No internet service',
+    'StreamingMovies_Yes',
+    'PaperlessBilling_Yes',
+    'PaymentMethod_Credit card (automatic)',
+    'PaymentMethod_Electronic check',
+    'PaymentMethod_Mailed check',
+    'is_high_value_customer',
+    'engagement_trend'
+]
 
 
 def risk_tier(prob):
@@ -107,6 +157,7 @@ def risk_tier(prob):
 def recommend_action(tier, is_high_value, tenure_segment):
     if tier == "Low":
         return "No action needed"
+
     if tier == "High":
         if is_high_value and tenure_segment == "Loyal":
             return "Proactive support outreach"
@@ -114,6 +165,7 @@ def recommend_action(tier, is_high_value, tenure_segment):
             return "Personalized discount"
         else:
             return "Plan downgrade offer"
+
     if tier == "Medium":
         if is_high_value:
             return "Loyalty reward"
@@ -123,36 +175,68 @@ def recommend_action(tier, is_high_value, tenure_segment):
 
 def generate_explanation(tier, is_high_value, tenure_segment, prob):
     if tier == "Low":
-        return f"Low churn risk ({prob:.1%}). Customer appears stable — no intervention needed."
+        return (
+            f"Low churn risk ({prob:.1%}). "
+            "Customer appears stable — no intervention needed."
+        )
+
     if tier == "High" and is_high_value and tenure_segment == "Loyal":
-        return f"High churn risk ({prob:.1%}) despite being a loyal, high-value customer — likely an unresolved issue. Recommend direct outreach rather than a discount."
+        return (
+            f"High churn risk ({prob:.1%}) despite being a loyal, "
+            "high-value customer — likely an unresolved issue. "
+            "Recommend direct outreach rather than a discount."
+        )
+
     if tier == "High" and is_high_value:
-        return f"High churn risk ({prob:.1%}) in a high-value but not-yet-loyal customer. A personalized discount may reinforce their decision to stay."
+        return (
+            f"High churn risk ({prob:.1%}) in a high-value but "
+            "not-yet-loyal customer. A personalized discount may "
+            "reinforce their decision to stay."
+        )
+
     if tier == "High":
-        return f"High churn risk ({prob:.1%}) in a lower-value customer. A cheaper plan option may retain them at lower cost."
+        return (
+            f"High churn risk ({prob:.1%}) in a lower-value customer. "
+            "A cheaper plan option may retain them at lower cost."
+        )
+
     if tier == "Medium" and is_high_value:
-        return f"Moderate churn risk ({prob:.1%}) in a high-value customer. A loyalty reward can reinforce the relationship."
-    return f"Moderate churn risk ({prob:.1%}). A light-touch check-in may catch emerging issues early."
+        return (
+            f"Moderate churn risk ({prob:.1%}) in a high-value customer. "
+            "A loyalty reward can reinforce the relationship."
+        )
+
+    return (
+        f"Moderate churn risk ({prob:.1%}). "
+        "A light-touch check-in may catch emerging issues early."
+    )
 
 
 @app.get("/")
 def root():
-    return {"message": "ChurnGuard AI API is running"}
+    return {
+        "message": "ChurnGuard AI API is running"
+    }
 
 
 @app.post("/predict-and-retain")
 def predict_and_retain(customer: CustomerData):
     data = customer.dict()
+
     renamed_data = {}
+
     for key, value in data.items():
         actual_column_name = FIELD_NAME_MAP.get(key, key)
         renamed_data[actual_column_name] = value
 
     input_df = pd.DataFrame([renamed_data])[MODEL_COLUMNS]
+
     prob = float(model.predict_proba(input_df)[0, 1])
+
     tier = risk_tier(prob)
 
     tenure_months = customer.customer_tenure_months
+
     if tenure_months <= 6:
         tenure_segment = "New"
     elif tenure_months <= 24:
@@ -161,8 +245,19 @@ def predict_and_retain(customer: CustomerData):
         tenure_segment = "Loyal"
 
     is_high_value = bool(customer.is_high_value_customer)
-    action = recommend_action(tier, is_high_value, tenure_segment)
-    explanation = generate_explanation(tier, is_high_value, tenure_segment, prob)
+
+    action = recommend_action(
+        tier,
+        is_high_value,
+        tenure_segment
+    )
+
+    explanation = generate_explanation(
+        tier,
+        is_high_value,
+        tenure_segment,
+        prob
+    )
 
     return {
         "churn_probability": round(prob, 4),
@@ -176,12 +271,15 @@ def predict_and_retain(customer: CustomerData):
 
 from typing import List
 
+
 @app.post("/predict-batch")
 def predict_batch(customers: List[CustomerData]):
     results = []
+
     for customer in customers:
         result = predict_and_retain(customer)
         results.append(result)
+
     return results
 
 
@@ -189,23 +287,50 @@ def predict_batch(customers: List[CustomerData]):
 def business_impact():
     audit_df = pd.read_csv(AUDIT_LOG_PATH)
 
-    acted_on = audit_df[audit_df["recommended_action"] != "No action needed"]
-    true_churners_acted_on = acted_on[acted_on["true_churn_label"] == 1]
+    acted_on = audit_df[
+        audit_df["recommended_action"] != "No action needed"
+    ]
 
-    total_mrr_at_risk = audit_df[audit_df["true_churn_label"] == 1]["monthly_spend"].sum()
-    mrr_flagged = true_churners_acted_on["monthly_spend"].sum()
-    coverage_pct = (mrr_flagged / total_mrr_at_risk * 100) if total_mrr_at_risk > 0 else 0
+    true_churners_acted_on = acted_on[
+        acted_on["true_churn_label"] == 1
+    ]
+
+    total_mrr_at_risk = audit_df[
+        audit_df["true_churn_label"] == 1
+    ]["monthly_spend"].sum()
+
+    mrr_flagged = true_churners_acted_on[
+        "monthly_spend"
+    ].sum()
+
+    coverage_pct = (
+        mrr_flagged / total_mrr_at_risk * 100
+        if total_mrr_at_risk > 0
+        else 0
+    )
 
     return {
         "customers_processed": len(audit_df),
         "customers_flagged": len(acted_on),
         "true_churners_flagged": len(true_churners_acted_on),
-        "total_mrr_at_risk": round(float(total_mrr_at_risk), 2),
-        "mrr_correctly_flagged": round(float(mrr_flagged), 2),
-        "coverage_pct": round(float(coverage_pct), 1),
+        "total_mrr_at_risk": round(
+            float(total_mrr_at_risk), 2
+        ),
+        "mrr_correctly_flagged": round(
+            float(mrr_flagged), 2
+        ),
+        "coverage_pct": round(
+            float(coverage_pct), 1
+        ),
         "mrr_saved_scenarios": {
-            "20%": round(float(mrr_flagged * 0.20), 2),
-            "35%": round(float(mrr_flagged * 0.35), 2),
-            "50%": round(float(mrr_flagged * 0.50), 2),
+            "20%": round(
+                float(mrr_flagged * 0.20), 2
+            ),
+            "35%": round(
+                float(mrr_flagged * 0.35), 2
+            ),
+            "50%": round(
+                float(mrr_flagged * 0.50), 2
+            ),
         }
     }
